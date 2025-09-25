@@ -3,7 +3,7 @@ require('dotenv').config(); // Loads variables from .env file
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2'); // Import the mysql2 library
-
+const path = require('path');
 // Create an Express application
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 8080;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // --- DATABASE CONNECTION ---
 // Create a connection pool to the database
@@ -37,7 +38,10 @@ app.get('/api/products', async (req, res) => {
     }
 });
 
-
+// Handles any requests that don't match the ones above
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
