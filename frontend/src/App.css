@@ -1,0 +1,239 @@
+/* Pastel Color Palette */
+:root {
+    --pastel-light: #F0F8FF; /* AliceBlue */
+    --pastel-blue: #ADD8E6;  /* LightBlue */
+    --pastel-green: #98FB98; /* PaleGreen */
+    --pastel-yellow: #FAFAD2; /* LightGoldenrodYellow */
+    --pastel-pink: #FFB6C1;  /* LightPink */
+    --text-dark: #333;
+    --text-light: #666;
+    --border-color: #E0E0E0;
+}
+
+  /* Global Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--pastel-light); /* Light pastel background */
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background-color: #fff; /* White background for main content area */
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2, h3 {
+    color: var(--pastel-blue); /* A nice pastel blue for headings */
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+  /* Product Grid */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
+}
+
+.product-card {
+    background-color: var(--pastel-yellow); /* Yellowish pastel card background */
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Push button to bottom */
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.product-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover; /* Ensures images cover the area without distortion */
+    border-bottom: 1px solid var(--border-color);
+}
+
+.product-card-content {
+    padding: 1.5rem;
+    flex-grow: 1; /* Allows content to expand */
+}
+
+.product-card h3 {
+    font-size: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+    color: var(--text-dark); /* Darker text for readability */
+    text-align: left;
+}
+
+.product-card p {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.product-price {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--pastel-blue);
+    text-align: right;
+    margin-top: auto; /* Pushes price to the bottom if content is dynamic */
+}
+
+.add-to-cart-btn {
+    display: block; /* Make button take full width */
+    width: calc(100% - 3rem); /* Full width minus padding */
+    margin: 0 1.5rem 1.5rem 1.5rem; /* Add margin around */
+    padding: 0.8rem 1.5rem;
+    background-color: var(--pastel-green); /* Green pastel for action */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.add-to-cart-btn:hover {
+    background-color: #7CCD7C; /* Slightly darker green on hover */
+}
+
+  /* Utility classes */
+.text-center {
+    text-align: center;
+}
+
+.loading-message, .error-message {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+    color: var(--text-light);
+}
+
+.error-message {
+    color: #D8000C; /* A subtle warning red */
+    background-color: #FFD2D2;
+    border: 1px solid #D8000C;
+    border-radius: 5px;
+    margin: 2rem auto;
+    max-width: 500px;
+}
+
+
+
+/* App Layout */
+.app-layout {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 2rem;
+    max-width: 1600px;
+    margin: 2rem auto;
+    padding: 1rem;
+}
+
+.product-list-container {
+    flex: 3; /* Takes up 3/4 of the space */
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+.cart-section {
+    flex: 1; /* Takes up 1/4 of the space */
+    position: sticky;
+    top: 2rem; /* Sticks to the top as you scroll */
+}
+
+  /* Cart Container */
+.cart-container {
+    background-color: var(--pastel-yellow);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.cart-container h2 {
+    color: var(--text-dark);
+    margin-top: 0;
+    border-bottom: 2px solid var(--pastel-blue);
+    padding-bottom: 0.5rem;
+}
+
+  /* Cart Item Styling */
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.cart-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.cart-item-details h3 {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+    margin: 0 0 0.25rem 0;
+    text-align: left;
+}
+.cart-item-details p {
+    margin: 0;
+    color: var(--text-light);
+}
+
+.cart-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quantity-input {
+    width: 50px;
+    padding: 0.3rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.remove-btn {
+    background-color: var(--pastel-pink);
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+.remove-btn:hover {
+    background-color: #f88392;
+}
+
+  /* Cart Total */
+.cart-total {
+    margin-top: 1.5rem;
+    text-align: right;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--pastel-blue);
+}
