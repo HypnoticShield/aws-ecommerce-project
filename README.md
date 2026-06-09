@@ -20,6 +20,24 @@ The project is structured into two main components:
 
 ---
 
+## 🌐 Cloud Architecture
+
+Below is the cloud deployment architecture diagram for the e-commerce application on AWS:
+
+![AWS Architecture Diagram](architecture.png)
+
+### AWS Services & Architecture Explanation
+
+*   **User / Actor**: The customer initiates requests to the application via their web browser.
+*   **Elastic Load Balancer (ELB)**: Acts as the single point of contact for clients. It automatically distributes incoming application traffic across the active EC2 instances in the Auto Scaling Group. This ensures high availability, fault tolerance, and seamless traffic routing.
+*   **Virtual Private Cloud (VPC) & Private Subnet**: For security, all application compute resources and database instances are isolated inside a private subnet within an AWS VPC. This shields them from direct exposure/access to the public internet, allowing traffic only through the ELB.
+*   **Auto Scaling Group (ASG)**: Monitors application load and automatically adjusts the number of EC2 hosting instances. It scales out (launches more instances) during peak traffic to maintain performance, and scales in (terminates excess instances) during low traffic to optimize costs.
+*   **EC2 Hosting (Elastic Compute Cloud)**: Hosts the production-ready Node.js/Express backend and serves the React static assets. These instances run within the Auto Scaling Group in the private subnet.
+*   **Amazon RDS (Relational Database Service)**: A managed database service hosting the MySQL database inside the secure private subnet. It stores the product information, user data, and order history, and is configured to only allow database connections from the EC2 hosting instances.
+*   **Amazon S3 (Simple Storage Service)**: Used for storing and fetching static media assets, such as high-resolution product images. This offloads static asset serving from the EC2 instances, improving overall application performance and scalability.
+
+---
+
 ## 🛠️ Tech Stack
 
 *   **Frontend**: React (v19), CSS (custom pastel theme), Vite

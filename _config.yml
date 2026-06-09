@@ -1,0 +1,6 @@
+# Jekyll configuration to exclude application source code and dependencies from GitHub Pages build
+exclude:
+  - backend
+  - frontend
+  - node_modules
+  - vendor
