@@ -82,129 +82,98 @@ A custom **Virtual Private Cloud (VPC)** was created to isolate all resources. T
 
 ---
 
-## 🚀 Getting Started
+## 🚀 AWS Deployment Guide (Getting Started)
+
+To deploy and run this full-stack application on the AWS infrastructure configured in this project, follow the guide below:
 
 ### 📋 Prerequisites
-
-Make sure you have the following installed on your machine:
-*   **Node.js** (v16+ recommended)
-*   **npm**
-*   **MySQL Server**
+*   An active **AWS Account** with permissions to configure VPC, EC2, RDS, S3, IAM, and ELB/ASG.
+*   **GitHub Repository** hosting this project codebase.
+*   **MySQL Client** (installed locally or on a bastion host) to initialize the RDS database.
 
 ---
 
-### 🗄️ 1. Database Setup
-
-1. Log into your MySQL server:
-   ```sql
-   mysql -u root -p
-   ```
-
-2. Create the database:
-   ```sql
-   CREATE DATABASE ecommerce_db;
-   USE ecommerce_db;
-   ```
-
-3. Create the `products` table:
-   ```sql
-   CREATE TABLE products (
-       id INT AUTO_INCREMENT PRIMARY KEY,
-       name VARCHAR(255) NOT NULL,
-       description TEXT,
-       price DECIMAL(10, 2) NOT NULL
-   );
-   ```
-
-4. Insert dummy sample products:
-   ```sql
-   INSERT INTO products (name, description, price) VALUES
-   ('Minimalist Mechanical Keyboard', 'A compact tenkeyless mechanical keyboard with RGB backlighting and tactile switches.', 89.99),
-   ('Ergonomic Wireless Mouse', 'High-precision wireless mouse designed for comfort and extended productivity.', 49.99),
-   ('Active Noise Cancelling Headphones', 'Over-ear wireless headphones with premium sound quality and active ambient noise cancellation.', 199.99),
-   ('Smart Fitness Watch', 'Waterproof fitness tracker with heart rate monitor, sleep tracking, and 10-day battery life.', 129.50),
-   ('Ultra-Wide Curved Monitor', '34-inch curved gaming and productivity monitor with 144Hz refresh rate.', 349.99);
-   ```
+### 🗄️ 1. RDS Database Provisioning & Schema Setup
+1.  **Launch RDS MySQL**: Ensure you have an Amazon RDS instance running MySQL in your VPC, configured under the `db-sg` security group (no public access).
+2.  **Connect to RDS**: Use an EC2 instance within the same VPC (acting as a bastion host) or a secure VPN connection to log into the database:
+    ```bash
+    mysql -h <rds-endpoint-hostname> -P 3306 -u <your_rds_master_username> -p
+    ```
+3.  **Create Database**: Run the following commands to initialize the schema:
+    ```sql
+    CREATE DATABASE ecommerce_db;
+    USE ecommerce_db;
+    ```
+4.  **Create Products Table**:
+    ```sql
+    CREATE TABLE products (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        price DECIMAL(10, 2) NOT NULL
+    );
+    ```
+5.  **Insert Sample Products**:
+    ```sql
+    INSERT INTO products (name, description, price) VALUES
+    ('Minimalist Mechanical Keyboard', 'A compact tenkeyless mechanical keyboard with RGB backlighting and tactile switches.', 89.99),
+    ('Ergonomic Wireless Mouse', 'High-precision wireless mouse designed for comfort and extended productivity.', 49.99),
+    ('Active Noise Cancelling Headphones', 'Over-ear wireless headphones with premium sound quality and active ambient noise cancellation.', 199.99),
+    ('Smart Fitness Watch', 'Waterproof fitness tracker with heart rate monitor, sleep tracking, and 10-day battery life.', 129.50),
+    ('Ultra-Wide Curved Monitor', '34-inch curved gaming and productivity monitor with 144Hz refresh rate.', 349.99);
+    ```
 
 ---
 
-### ⚙️ 2. Backend Configuration
+### ⚙️ 2. Launch Template & EC2 User Data Configuration
+To bootstrap the application servers automatically when launched by the Auto Scaling Group, configure the **User Data Script** in your EC2 Launch Template. 
 
-1. Navigate to the backend folder:
-   ```bash
-   cd backend
-   ```
+Create a startup script that does the following:
+```bash
+#!/bin/bash
+# 1. Update and install dependencies
+sudo apt-get update -y
+sudo apt-get install -y nodejs npm git
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+# 2. Clone the repository
+git clone https://github.com/HypnoticShield/aws-ecommerce-project.git /home/ubuntu/app
+cd /home/ubuntu/app
 
-3. Configure environment variables. Create a `.env` file in the `backend/` directory:
-   ```env
-   PORT=8080
-   DB_HOST=localhost
-   DB_USER=your_mysql_username
-   DB_PASSWORD=your_mysql_password
-   DB_NAME=ecommerce_db
-   ```
+# 3. Create the backend production configuration (.env)
+cat <<EOF > backend/.env
+PORT=8080
+DB_HOST=<rds-endpoint-hostname>
+DB_USER=<your_rds_master_username>
+DB_PASSWORD=<your_rds_password>
+DB_NAME=ecommerce_db
+EOF
 
-4. Start the backend server in development mode (using Nodemon for auto-reload):
-   ```bash
-   npm run dev
-   ```
-   The backend API will run on **`http://localhost:8080`**.
+# 4. Build and Compile Frontend assets
+cd frontend
+npm install
+npm run build # Generates the production bundle directly in backend/dist
 
----
-
-### 💻 3. Frontend Configuration
-
-1. Navigate to the frontend folder:
-   ```bash
-   cd ../frontend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
-   Open **`http://localhost:5173`** (or the URL provided by Vite) in your browser.
+# 5. Launch Node.js/Express Backend Server
+cd ../backend
+npm install
+npm install -g pm2
+pm2 start index.js --name "ecommerce-api" --update-env
+```
 
 ---
 
-## 📦 Production Deployment & Build Pipeline
-
-The application features a single-deployment build pipeline where the frontend compiles assets directly into the backend folder to be served by the Express server:
-
-1. Build the frontend assets:
-   ```bash
-   cd frontend
-   ```
-   ```bash
-   npm run build
-   ```
-   *Note: This script compiles and outputs the production bundle to `../backend/dist` (managed via Vite's `build.outDir` configuration).*
-
-2. The Express server (`backend/index.js`) automatically serves static files from the `dist` folder:
+### 💻 3. Routing & Load Balancer Verification
+Once the EC2 instances are provisioned by the Auto Scaling Group:
+1. The **Elastic Load Balancer (ELB)** routes public web traffic (`http://<elb-dns-name>/`) directly to the target group containing your EC2 instances on port `8080`.
+2. The Node.js Express server automatically serves the compiled Vite production assets from the static `dist/` directory:
    ```javascript
    app.use(express.static(path.join(__dirname, 'dist')));
    ```
-
-3. Any fallback routes will be redirected to the SPA index page:
+3. Any fallback web routes are routed to the React Single Page Application (SPA):
    ```javascript
    app.get('*', (req, res) => {
        res.sendFile(path.join(__dirname, 'dist', 'index.html'));
    });
    ```
-
-4. To start the production application, simply run the backend server:
-   ```bash
-   cd ../backend
-   npm start
-   ```
-   The entire application (frontend + API) will be accessible at **`http://localhost:8080`**.
+4. Access the fully deployed e-commerce application in your web browser using your load balancer's DNS name:
+   `http://<your-load-balancer-dns-name>`
