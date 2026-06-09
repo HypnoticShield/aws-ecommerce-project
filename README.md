@@ -28,13 +28,48 @@ Below is the cloud deployment architecture diagram for the e-commerce applicatio
 
 ### AWS Services & Architecture Explanation
 
-*   **User / Actor**: The customer initiates requests to the application via their web browser.
-*   **Elastic Load Balancer (ELB)**: Acts as the single point of contact for clients. It automatically distributes incoming application traffic across the active EC2 instances in the Auto Scaling Group. This ensures high availability, fault tolerance, and seamless traffic routing.
-*   **Virtual Private Cloud (VPC) & Private Subnet**: For security, all application compute resources and database instances are isolated inside a private subnet within an AWS VPC. This shields them from direct exposure/access to the public internet, allowing traffic only through the ELB.
-*   **Auto Scaling Group (ASG)**: Monitors application load and automatically adjusts the number of EC2 hosting instances. It scales out (launches more instances) during peak traffic to maintain performance, and scales in (terminates excess instances) during low traffic to optimize costs.
-*   **EC2 Hosting (Elastic Compute Cloud)**: Hosts the production-ready Node.js/Express backend and serves the React static assets. These instances run within the Auto Scaling Group in the private subnet.
-*   **Amazon RDS (Relational Database Service)**: A managed database service hosting the MySQL database inside the secure private subnet. It stores the product information, user data, and order history, and is configured to only allow database connections from the EC2 hosting instances.
-*   **Amazon S3 (Simple Storage Service)**: Used for storing and fetching static media assets, such as high-resolution product images. This offloads static asset serving from the EC2 instances, improving overall application performance and scalability.
+*   **User / Actor**: Customers access the application via their web browsers, initiating requests over the internet.
+*   **Elastic Load Balancer (ELB)**: Serves as the single point of entry. It distributes incoming traffic across the running EC2 instances inside the Target Group, ensuring high availability and fault tolerance.
+*   **Virtual Private Cloud (VPC)**: Houses all cloud resources, isolating the environment and providing network segmentation to secure compute and database instances.
+*   **Auto Scaling Group (ASG)**: Manages and scales the application tier instances automatically depending on load, maintaining performance and minimizing cost.
+*   **EC2 Instances**: Host the full-stack web application, running the Node.js/Express backend which serves the compiled React frontend assets.
+*   **Amazon RDS (MySQL)**: A managed database instance situated in the database tier, storing dynamic product, user, and transaction data.
+*   **Amazon S3**: Hosts static media assets (such as product images), offloading static asset delivery from the EC2 application servers.
+
+---
+
+### ⚙️ Detailed AWS Deployment & Services Configuration
+
+This project was deployed on AWS using a highly secure, scalable, and resilient cloud architecture. Below are the specific configuration details:
+
+#### 1. 🔒 Network & Security Groups Setup
+A custom **Virtual Private Cloud (VPC)** was created to isolate all resources. To enforce strict security boundaries, three distinct security groups were configured:
+
+| Security Group | Description | Allowed Inbound Traffic | Purpose |
+| :--- | :--- | :--- | :--- |
+| **`elb-sg`** | Load Balancer SG | HTTP (80) & HTTPS (443) from `0.0.0.0/0` (public internet) | Allows public web traffic to reach the Load Balancer. |
+| **`app-sg`** | Application Server SG | Ports needed for Node/React backend **only** from the load balancer (`elb-sg`) | Protects application instances from direct public internet access. |
+| **`db-sg`** | Database Server SG | MySQL Port (3306) **only** from the application servers (`app-sg`) | Limits database access strictly to the application tier. |
+
+#### 2. 🗄️ Database & Storage Layer Configuration
+*   **Amazon RDS (MySQL Instance)**: Created with **no public access** enabled. It is deployed within the VPC and secured by `db-sg`, ensuring it is only accessible from the EC2 instances running the backend application.
+*   **Amazon S3 (Simple Storage Service)**: Created an S3 bucket with public access specifically for storing and serving static application assets (like product images).
+
+#### 3. 🚀 Compute, IAM & Auto-Scaling Configuration
+*   **IAM Security Role (`EC2-S3-Access-Role`)**: Created a custom Identity and Access Management (IAM) role that grants EC2 instances full read/write access to the S3 bucket.
+*   **Launch Template**: Configured to automate the provisioning of identical, pre-configured application servers. It specifies:
+    *   The `app-sg` security group for network isolation.
+    *   The `EC2-S3-Access-Role` IAM profile for S3 authorization.
+    *   **User Data Script**: A startup shell script that automatically executes on instance boot to:
+        1. Install system dependencies (Node.js, npm, git, etc.).
+        2. Clone the application repository from GitHub.
+        3. Set up local configurations and environment variables (connecting backend to RDS endpoint/credentials and S3 bucket).
+        4. Install packages and start the server application.
+*   **Target Group & Elastic Load Balancer (ELB)**: Created a target group containing the dynamically provisioned EC2 instances, and configured the Classic/Application Load Balancer to route traffic to them.
+*   **Auto Scaling Group (ASG)**:
+    *   Attached to the existing Elastic Load Balancer and target group.
+    *   **Capacity Settings**: Desired capacity = **2**, Minimum capacity = **1**, Maximum capacity = **4**.
+    *   **Resiliency & High Availability Test**: Successfully verified the auto-scaling capability by manually terminating running EC2 instances. The Auto Scaling Group automatically detected the unhealthy state and launched new EC2 instances to restore the running count back to the desired capacity of **2**.
 
 ---
 
